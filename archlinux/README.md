@@ -1,5 +1,7 @@
 # Arch Linux ARM for OPPO R11S
 
+> [简体中文 / Simplified Chinese (also in Chinese)](README.zh-CN.md)
+
 This directory contains the reproducible userspace and boot integration for an
 Arch Linux ARM installation on the OPPO R11S. Generated files, firmware,
 partition dumps, passwords, SSH keys, and flashable images are intentionally
