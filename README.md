@@ -1,5 +1,7 @@
 # Arch Linux ARM for OPPO R11S
 
+> [简体中文 / Simplified Chinese (also in Chinese)](README.zh-CN.md)
+
 Arch Linux ARM deployment, recovery, and hardware-integration sources for the
 OPPO R11S (`oppo,r11s`) mainline Linux port. The deployed system uses ext4 on
 the original Android `userdata` partition, systemd, KDE Plasma/Wayland,

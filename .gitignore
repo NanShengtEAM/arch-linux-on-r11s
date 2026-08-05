@@ -1,6 +1,7 @@
 *
 !.gitignore
 !README.md
+!README.zh-CN.md
 !OPPO_R11S_WIFI_MAINLINE_BRINGUP.md
 !initramfs/
 !initramfs/**
