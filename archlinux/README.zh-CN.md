@@ -45,12 +45,12 @@ apt-get install -y clang clang-19 lld-19 llvm-19 llvm-19-tools llvm-19-dev \
 内核为 Linux 7.0.x 且要求 clang >= 15，因此必须使用较新的 clang（19）；bookworm 默认的 clang-14 过旧。暴露 LLVM 19 工具链：
 
 ```sh
-mkdir -p /tmp/opencode/llvm19-bin
+mkdir -p /usr/local/llvm19-bin
 for t in clang clang++ ld.lld llvm-ar llvm-as llvm-nm llvm-objcopy \
          llvm-objdump llvm-ranlib llvm-readelf llvm-size llvm-strip; do
-  ln -sf /usr/bin/$t-19 /tmp/opencode/llvm19-bin/$t
+  ln -sf /usr/bin/$t-19 /usr/local/llvm19-bin/$t
 done
-export PATH=/tmp/opencode/llvm19-bin:$PATH
+export PATH=/usr/local/llvm19-bin:$PATH
 ```
 
 `mkbootimg` 与 `unpack_bootimg` 来自 Debian 的 `mkbootimg` 软件包（1:29.0.6-28）。

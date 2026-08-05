@@ -68,12 +68,12 @@ mandatory; the bookworm default clang-14 is too old. Expose the LLVM 19
 toolchain:
 
 ```sh
-mkdir -p /tmp/opencode/llvm19-bin
+mkdir -p /usr/local/llvm19-bin
 for t in clang clang++ ld.lld llvm-ar llvm-as llvm-nm llvm-objcopy \
          llvm-objdump llvm-ranlib llvm-readelf llvm-size llvm-strip; do
-  ln -sf /usr/bin/$t-19 /tmp/opencode/llvm19-bin/$t
+  ln -sf /usr/bin/$t-19 /usr/local/llvm19-bin/$t
 done
-export PATH=/tmp/opencode/llvm19-bin:$PATH
+export PATH=/usr/local/llvm19-bin:$PATH
 ```
 
 `mkbootimg` and `unpack_bootimg` come from the Debian `mkbootimg` package
