@@ -53,6 +53,14 @@ done
 export PATH=/usr/local/llvm19-bin:$PATH
 ```
 
+为了让工具链在每个新 shell 中自动生效，把 PATH 导出追加到 `~/.bashrc`：
+
+```sh
+echo 'export PATH=/usr/local/llvm19-bin:$PATH' >> ~/.bashrc
+```
+
+然后重新打开终端或执行 `source ~/.bashrc` 后再构建。
+
 `mkbootimg` 与 `unpack_bootimg` 来自 Debian 的 `mkbootimg` 软件包（1:29.0.6-28）。
 
 ### 1. 内核源码与配置

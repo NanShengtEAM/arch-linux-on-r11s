@@ -76,6 +76,15 @@ done
 export PATH=/usr/local/llvm19-bin:$PATH
 ```
 
+To make the toolchain available in every new shell, append the PATH export to
+`~/.bashrc`:
+
+```sh
+echo 'export PATH=/usr/local/llvm19-bin:$PATH' >> ~/.bashrc
+```
+
+Then open a new terminal or run `source ~/.bashrc` before building.
+
 `mkbootimg` and `unpack_bootimg` come from the Debian `mkbootimg` package
 (1:29.0.6-28).
 
