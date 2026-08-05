@@ -1,0 +1,9 @@
+[Unit]
+Description=OPPO R11S hardware initialization
+Wants=r11s-local-hardware.service r11s-transport.service r11s-rmtfs.service
+Wants=r11s-tqftpserv.service r11s-diag-router.service r11s-wifi.service
+Wants=r11s-audio.service r11s-bluetooth-setup.service
+After=local-fs.target
+
+[Install]
+WantedBy=multi-user.target

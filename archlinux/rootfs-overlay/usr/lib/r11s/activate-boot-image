@@ -27,11 +27,9 @@ image_size=$(stat -c %s "$image")
 	exit 1
 }
 
-boot=${R11T_BOOT_DEVICE:-/dev/disk/by-partlabel/boot}
-bootbak=${R11T_BOOTBAK_DEVICE:-/dev/disk/by-partlabel/bootbak}
-state_root=${R11T_STATE_DIR:-/var/lib/r11t-state}
-snapshot_root=${R11T_SNAPSHOT_DIR:-/.snapshots}
-root_source=${R11T_ROOT_SOURCE:-/}
+boot=${R11S_BOOT_DEVICE:-/dev/disk/by-partlabel/boot}
+bootbak=${R11S_BOOTBAK_DEVICE:-/dev/disk/by-partlabel/bootbak}
+state_root=${R11S_STATE_DIR:-/var/lib/r11s-state}
 for device in "$boot" "$bootbak"; do
 	[[ -b $device ]] || { echo "ERROR: missing $device" >&2; exit 1; }
 	[[ $(blockdev --getsize64 "$device") == "$BOOT_SIZE" ]] || {
@@ -43,17 +41,11 @@ mountpoint -q "$state_root" || {
 	echo "ERROR: cache-backed state directory is not mounted: $state_root" >&2
 	exit 1
 }
-mountpoint -q "$snapshot_root" || {
-	echo "ERROR: snapshot directory is not mounted: $snapshot_root" >&2
-	exit 1
-}
 
 timestamp=$(date -u +%Y%m%dT%H%M%SZ)
-snapshot="pre-boot-$timestamp"
 state="$state_root/boot-images/$timestamp"
 mkdir -p "$state"
 
-btrfs subvolume snapshot -r "$root_source" "$snapshot_root/$snapshot"
 dd if="$boot" bs=4M status=none | zstd -T0 -3 -o "$state/boot.img.zst"
 boot_hash=$(sha256sum "$boot" | cut -d' ' -f1)
 
@@ -76,7 +68,6 @@ readback_hash=$(dd if="$boot" bs=4096 count="$pages" status=none | \
 
 cat > "$state/manifest" <<EOF
 timestamp=$timestamp
-snapshot=$snapshot
 previous_boot_sha256=$boot_hash
 new_boot_sha256=$image_hash
 new_boot_size=$image_size
@@ -84,5 +75,6 @@ kernel_release=$(uname -r)
 EOF
 sync
 echo "Activated boot image $image_hash"
-echo "Rollback snapshot: $snapshot"
+echo "Previous boot retained in bootbak and $state/boot.img.zst"
+echo 'For a full root rollback, restore the rootfs image from the rescue partition.'
 echo 'Reboot manually after reviewing the manifest.'

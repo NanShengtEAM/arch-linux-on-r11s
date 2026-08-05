@@ -7,7 +7,7 @@ mount -t devtmpfs devtmpfs /dev
 mount -t proc proc /proc
 mount -t sysfs sysfs /sys
 mount -t configfs configfs /sys/kernel/config
-hostname r11t-installer
+hostname r11s-installer
 
 resolve_part() {
 	name=$1
@@ -26,18 +26,18 @@ resolve_part() {
 
 TARGET=system
 case " $(cat /proc/cmdline) " in
-	*' r11t.install_target=userdata '*) TARGET=userdata ;;
-	*' r11t.install_target=system '*) TARGET=system ;;
-	*' r11t.install_target=all '*) TARGET=all ;;
+	*' r11s.install_target=userdata '*) TARGET=userdata ;;
+	*' r11s.install_target=system '*) TARGET=system ;;
+	*' r11s.install_target=all '*) TARGET=all ;;
 esac
 
-g=/sys/kernel/config/usb_gadget/r11t-installer
+g=/sys/kernel/config/usb_gadget/r11s-installer
 mkdir -p "$g/strings/0x409" "$g/configs/c.1/strings/0x409"
 echo 0x18d1 > "$g/idVendor"
 echo 0xd002 > "$g/idProduct"
-echo r11t-installer > "$g/strings/0x409/serialnumber"
+echo r11s-installer > "$g/strings/0x409/serialnumber"
 echo OPPO > "$g/strings/0x409/manufacturer"
-echo "R11T Arch installer (ECM)" > "$g/strings/0x409/product"
+echo "R11S Arch installer (ECM)" > "$g/strings/0x409/product"
 echo 'ACM + ECM installer network' > "$g/configs/c.1/strings/0x409/configuration"
 
 mkdir -p "$g/functions/acm.usb0"
@@ -62,11 +62,11 @@ ifconfig usb0 172.31.66.1 netmask 255.255.255.0 up
 stty -F /dev/ttyGS0 raw -echo
 exec </dev/ttyGS0 >/dev/ttyGS0 2>&1
 
-echo 'OPPO R11T Arch installer recovery'
+echo 'OPPO R11S Arch installer recovery'
 echo 'ECM address: 172.31.66.1/24'
 echo "Selected install target: $TARGET"
 case " $(cat /proc/cmdline) " in
-	*' r11t.storage_write=1 '*)
+	*' r11s.storage_write=1 '*)
 		 echo 'Image receiver is enabled; no write starts automatically.'
 		echo 'Run receive_arch_image or receive_arch_boot with explicit size, hash, and --confirm.'
 		;;

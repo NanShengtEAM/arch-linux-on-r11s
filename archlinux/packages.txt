@@ -1,5 +1,5 @@
 base
-btrfs-progs
+e2fsprogs
 zram-generator
 sudo
 openssh

@@ -1,5 +1,5 @@
 [Unit]
-Description=OPPO R11T USB ACM console
+Description=OPPO R11S USB ACM console
 DefaultDependencies=no
 After=sys-kernel-config.mount
 Before=getty.target
@@ -7,7 +7,7 @@ Before=getty.target
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=/usr/lib/r11t/setup-usb-acm
+ExecStart=/usr/lib/r11s/setup-usb-acm
 
 [Install]
 WantedBy=sysinit.target

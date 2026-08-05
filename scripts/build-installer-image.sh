@@ -6,7 +6,7 @@ LINUX="$ROOT/linux"
 BUILD="$LINUX/build"
 IR="$BUILD/initramfs-root"
 INIT="$ROOT/initramfs/init.arch-installer"
-RAMDISK="$BUILD/r11t-installer-initramfs.cpio.gz"
+RAMDISK="$BUILD/r11s-installer-initramfs.cpio.gz"
 KERNEL_DTB="$BUILD/arch/arm64/boot/Image.gz-dtb"
 CMDLINE='console=tty0 console=ttyMSM0,115200n8 earlycon=msm_serial_dm,0xc170000 loglevel=7 panic=10 root=/dev/ram0 rw rdinit=/init'
 TARGET=system
@@ -34,12 +34,12 @@ case "$TARGET" in
 esac
 
 MODE=test
-CMDLINE="$CMDLINE r11t.install_target=$TARGET"
+CMDLINE="$CMDLINE r11s.install_target=$TARGET"
 if (( STORAGE_WRITE )); then
 	MODE=write
-	CMDLINE="$CMDLINE r11t.storage_write=1"
+	CMDLINE="$CMDLINE r11s.storage_write=1"
 fi
-OUTPUT="$BUILD/recovery-r11t-installer-ecm-$TARGET-$MODE.img"
+OUTPUT="$BUILD/recovery-r11s-installer-ecm-$TARGET-$MODE.img"
 
 "$ROOT/scripts/build-diag-image.sh"
 
@@ -65,7 +65,7 @@ if (( ramdisk_size >= ramdisk_limit )); then
 fi
 
 cp "$BUILD/arch/arm64/boot/Image.gz" "$KERNEL_DTB"
-dd if="$BUILD/arch/arm64/boot/dts/qcom/sdm660-oppo-r11t.dtb" \
+dd if="$BUILD/arch/arm64/boot/dts/qcom/sdm660-oppo-r11s.dtb" \
 	of="$KERNEL_DTB" oflag=append conv=notrunc status=none
 
 mkbootimg \
@@ -92,4 +92,5 @@ image_size=$(stat -c %s "$OUTPUT")
 printf 'Installer ramdisk end: 0x%x (%d bytes free)\n' \
 	$((0x83000000 + ramdisk_size)) $((ramdisk_limit - ramdisk_size))
 sha256sum "$OUTPUT"
-unpack_bootimg --boot_img "$OUTPUT" --format=info
+rm -rf "$BUILD/unpack-verify"
+unpack_bootimg --boot_img "$OUTPUT" --out "$BUILD/unpack-verify" >/dev/null

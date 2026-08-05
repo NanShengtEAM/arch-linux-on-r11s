@@ -11,5 +11,5 @@ for retry in $(seq 1 150); do
 done
 [ -d /sys/class/bluetooth/hci0 ] || { echo 'hci0 did not register' >&2; exit 1; }
 sleep 0.5
-/usr/lib/r11t/bt-hci-test --configure-only \
+/usr/lib/r11s/bt-hci-test --configure-only \
 	/mnt/persist/bluetooth/.bt_nv.bin

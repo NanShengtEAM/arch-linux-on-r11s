@@ -22,7 +22,7 @@ done
 
 [ "$CONFIRM" -eq 1 ] || { echo 'ERROR: --confirm is required' >&2; exit 1; }
 case " $(cat /proc/cmdline) " in
-	*' r11t.storage_write=1 '*) ;;
+	*' r11s.storage_write=1 '*) ;;
 	*) echo 'ERROR: this recovery image has storage writes disabled' >&2; exit 1 ;;
 esac
 case "$BYTES" in ''|*[!0-9]*) usage ;; esac
@@ -46,10 +46,10 @@ resolve_part() {
 
 CONFIGURED_TARGET=system
 case " $(cat /proc/cmdline) " in
-	*' r11t.install_target=userdata '*)
+	*' r11s.install_target=userdata '*)
 		CONFIGURED_TARGET=userdata
 		;;
-	*' r11t.install_target=all '*) CONFIGURED_TARGET=all ;;
+	*' r11s.install_target=all '*) CONFIGURED_TARGET=all ;;
 esac
 
 if [ "$CONFIGURED_TARGET" = all ]; then

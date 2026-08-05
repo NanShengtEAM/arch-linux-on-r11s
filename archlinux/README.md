@@ -1,12 +1,12 @@
-# Arch Linux ARM for OPPO R11T
+# Arch Linux ARM for OPPO R11S
 
 This directory contains the reproducible userspace and boot integration for an
-Arch Linux ARM installation on the OPPO R11T. Generated files, firmware,
+Arch Linux ARM installation on the OPPO R11S. Generated files, firmware,
 partition dumps, passwords, SSH keys, and flashable images are intentionally
 excluded from Git.
 
-The installation keeps the factory GPT. `userdata` is the Btrfs system disk,
-`system` is a Btrfs offline rescue disk, and the Android boot image partitions
+The installation keeps the factory GPT. `userdata` is the ext4 system disk,
+`system` is an ext4 offline rescue disk, and the Android boot image partitions
 continue to carry the kernel, DTB, and initramfs.
 
 ## Safety model
@@ -26,7 +26,10 @@ continue to carry the kernel, DTB, and initramfs.
 
 ## Build order
 
-1. Build the root and rescue Btrfs images on exact-size loop devices with
+The scripts must run in exactly this order. Steps 1-3 are host-side builds;
+steps 4-6 run on the installer recovery via USB; step 7 is the end-user install.
+
+1. Build the root and rescue ext4 images on exact-size loop devices with
    `scripts/install-arch-rootfs.sh` and `scripts/prepare-rescue-filesystem.sh`.
 2. Build and verify the production boot image with
    `scripts/build-arch-boot-image.sh`.
@@ -43,4 +46,126 @@ continue to carry the kernel, DTB, and initramfs.
    complete old boot copy in `bootbak` before replacing `boot`.
 
 The first installed account is `alarm`. The installer prompts for both root and
-user passwords unless `R11T_SKIP_PASSWORDS=1` is explicitly set.
+user passwords unless `R11S_SKIP_PASSWORDS=1` is explicitly set.
+
+## Step-by-step guide (x86_64 host)
+
+### 0. Host prerequisites
+
+Debian 12 (bookworm) packages:
+
+```sh
+apt-get install -y clang-19 lld-19 llvm-19 llvm-19-tools llvm-19-dev \
+    llvm-19-linker-tools llvm-19-runtime make bc flex bison \
+    libelf-dev libssl-dev zstd cpio gzip dtc gcc-aarch64-linux-gnu \
+    mkbootimg curl git
+```
+
+The kernel is Linux 7.0.x and requires clang >= 15, so a modern clang (19) is
+mandatory; the bookworm default clang-14 is too old. Expose the LLVM 19
+toolchain:
+
+```sh
+mkdir -p /tmp/opencode/llvm19-bin
+for t in clang clang++ ld.lld llvm-ar llvm-as llvm-nm llvm-objcopy \
+         llvm-objdump llvm-ranlib llvm-readelf llvm-size llvm-strip; do
+  ln -sf /usr/bin/$t-19 /tmp/opencode/llvm19-bin/$t
+done
+export PATH=/tmp/opencode/llvm19-bin:$PATH
+```
+
+`mkbootimg` and `unpack_bootimg` come from the Debian `mkbootimg` package
+(1:29.0.6-28).
+
+### 1. Kernel source and configuration
+
+```sh
+git clone --depth 1 -b qcom-sdm660-7.0.y \
+    https://github.com/NanShengtEAM/linux-sdm660-oppor11_s.git linux
+make -C linux O=build ARCH=arm64 LLVM=1 sdm660_defconfig
+```
+
+The mainline tree carries the R11S device tree as
+`arch/arm64/boot/dts/qcom/sdm660-oppo-r11s.dts` (compatible `oppo,r11s`) and
+the modem memshare module as `drivers/soc/qcom/qcom-r11s-memshare.ko`
+(Kconfig symbol `QCOM_R11S_MEMSHARE`). Boot images append the DTB to
+`Image.gz` so the Qualcomm bootloader selects it.
+
+### 2. Compile kernel and modules
+
+```sh
+make -C linux O=build ARCH=arm64 LLVM=1 -j$(nproc) \
+    Image.gz qcom/sdm660-oppo-r11s.dtb modules
+```
+
+Artifacts: `linux/build/arch/arm64/boot/Image.gz`,
+`linux/build/arch/arm64/boot/dts/qcom/sdm660-oppo-r11s.dtb`, and modules
+under `linux/build` for `make modules_install`.
+
+### 3. Diagnostic image (produces static busybox first)
+
+```sh
+scripts/build-diag-image.sh
+```
+
+This builds the AArch64 initramfs root with a static busybox at
+`linux/build/initramfs-root/bin/busybox` and the diagnostic
+`linux/build/r11s-initramfs.cpio.gz` / diag boot image. The production and
+installer images reuse this busybox, so this script must run before them.
+
+### 4. Root and rescue ext4 filesystem images
+
+Create exact-size images first (userdata 56933465600 B, system 3481272320 B):
+
+```sh
+scripts/install-arch-rootfs.sh --device /dev/loopX --confirm
+scripts/prepare-rescue-filesystem.sh --device /dev/loopY \
+    --rootfs-image userdata.img --boot-image boot.img \
+    --recovery-image recovery.img --confirm
+```
+
+Both format ext4 (no btrfs subvolumes). `finalize-arch-image.sh` shrinks the
+53 GiB userdata image to 8 GiB afterward:
+
+```sh
+scripts/finalize-arch-image.sh --source userdata-53g.img \
+    --output userdata-8g.img --confirm
+```
+
+### 5. Production boot image
+
+```sh
+scripts/build-arch-boot-image.sh
+```
+
+Output `linux/build/boot-r11s-arch.img` with cmdline
+`root=PARTLABEL=userdata rootfstype=ext4 rootwait rw rdinit=/init`. The script
+verifies the ramdisk stays below the firmware region (0x83000000-0x85600000)
+and that the image fits boot. The native-GCC variant
+`scripts/build-arch-boot-image-gcc.sh` is intended for building on the device
+itself (aarch64 GCC); on x86_64 it is skipped in favour of the LLVM path.
+
+### 6. Installer recovery image
+
+```sh
+scripts/build-installer-image.sh --target all --write
+```
+
+Output `linux/build/recovery-r11s-installer-ecm-all-write.img`, flashed only
+to the `recovery` partition. It carries the initramfs ACM console and the USB
+ECM link at 172.31.66.1/24.
+
+### 7. On-device install flow
+
+```sh
+scripts/configure-installer-network.sh          # host: bring up 172.31.66.x
+# installer console (ACM) : receive_arch_image --target system
+scripts/send-arch-image.sh --image system.img --target system
+# installer console (ACM) : receive_arch_image --target userdata
+scripts/send-arch-image.sh --image userdata.img --target userdata
+# installer console (ACM) : receive_arch_boot < boot-r11s-arch.img
+```
+
+`receive_arch_boot` verifies the old boot copy in `bootbak` before replacing
+`boot`. Kernel updates produce a fresh image but are never auto-flashed by a
+pacman hook; flash them manually only after checking bootbak integrity.

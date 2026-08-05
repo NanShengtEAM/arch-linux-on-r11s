@@ -1,0 +1,12 @@
+[Unit]
+Description=Initialize OPPO R11S display, touch, battery, and LEDs
+Requires=r11s-firmware.service
+After=r11s-firmware.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/lib/r11s/start-local-hardware
+
+[Install]
+WantedBy=r11s-hardware.target

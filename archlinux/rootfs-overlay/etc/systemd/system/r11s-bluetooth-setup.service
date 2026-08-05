@@ -1,0 +1,13 @@
+[Unit]
+Description=Provision OPPO R11S WCN3990 Bluetooth address
+Requires=r11s-firmware.service
+After=r11s-firmware.service
+Before=bluetooth.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/lib/r11s/setup-bluetooth
+
+[Install]
+WantedBy=r11s-hardware.target

@@ -8,17 +8,17 @@ mount -t sysfs sysfs /sys
 mount -t configfs configfs /sys/kernel/config
 mount -t debugfs debugfs /sys/kernel/debug 2>/dev/null
 
-hostname r11t-mainline
+hostname r11s-mainline
 echo 8 > /proc/sys/kernel/printk
 
 # USB console first — keep this independent of display bring-up.
-G=/sys/kernel/config/usb_gadget/r11t
+G=/sys/kernel/config/usb_gadget/r11s
 mkdir -p "$G/strings/0x409" "$G/configs/c.1/strings/0x409"
 echo 0x18d1 > "$G/idVendor"
 echo 0xd001 > "$G/idProduct"
-echo r11t-mainline > "$G/strings/0x409/serialnumber"
+echo r11s-mainline > "$G/strings/0x409/serialnumber"
 echo OPPO > "$G/strings/0x409/manufacturer"
-echo "R11T mainline console" > "$G/strings/0x409/product"
+echo "R11S mainline console" > "$G/strings/0x409/product"
 echo "USB serial console" > "$G/configs/c.1/strings/0x409/configuration"
 mkdir -p "$G/functions/acm.usb0"
 ln -s "$G/functions/acm.usb0" "$G/configs/c.1/acm.usb0"
@@ -108,10 +108,10 @@ stride=$(cat /sys/class/graphics/fb0/stride 2>/dev/null)
 height=1920
 size=$((stride * height))
 mkdir -p /tmp
-dd if=/dev/zero bs="$stride" count="$height" 2>/dev/null | tr '\000' '\377' > /tmp/r11t-white.raw
-actual=$(wc -c < /tmp/r11t-white.raw)
+dd if=/dev/zero bs="$stride" count="$height" 2>/dev/null | tr '\000' '\377' > /tmp/r11s-white.raw
+actual=$(wc -c < /tmp/r11s-white.raw)
 [ "$actual" -eq "$size" ] || { echo "short frame: $actual/$size"; exit 1; }
-dd if=/tmp/r11t-white.raw of=/dev/fb0 bs="$stride" count="$height"
+dd if=/tmp/r11s-white.raw of=/dev/fb0 bs="$stride" count="$height"
 echo 1 > /sys/class/graphics/fb0/blank
 sleep 1
 echo 0 > /sys/class/graphics/fb0/blank
@@ -269,7 +269,7 @@ case "${1:-status}" in
 			echo "USB must begin in device role"
 			exit 1
 		}
-		UDC_FILE=/sys/kernel/config/usb_gadget/r11t/UDC
+		UDC_FILE=/sys/kernel/config/usb_gadget/r11s/UDC
 		[ -r "$UDC_FILE" ] || { echo "USB gadget UDC binding not found"; exit 1; }
 		UDC=$(cat "$UDC_FILE")
 		[ -n "$UDC" ] || { echo "USB gadget is not bound"; exit 1; }
@@ -407,8 +407,8 @@ if [ "$mode" = play ]; then
 	/bin/tinymix set 'HPL Mixer LDACL Switch' 1 || exit 1
 	/bin/tinymix set 'HPR Mixer RDACR Switch' 1 || exit 1
 	mkdir -p /tmp
-	/bin/audio-tone /tmp/r11t-tone.raw || exit 1
-	/bin/tinyplay /tmp/r11t-tone.raw -D 0 -d 0 -i raw -c 2 -r 48000 -b 16 -p 480 -n 8
+	/bin/audio-tone /tmp/r11s-tone.raw || exit 1
+	/bin/tinyplay /tmp/r11s-tone.raw -D 0 -d 0 -i raw -c 2 -r 48000 -b 16 -p 480 -n 8
 	echo "headset_play_rc=$?"
 fi
 
@@ -419,9 +419,9 @@ if [ "$mode" = record ]; then
 	/bin/tinymix set 'Digital DEC1 MUX' ADC2 || exit 1
 	/bin/tinymix set 'ADC2 MUX' INP2 || exit 1
 	mkdir -p /tmp
-	/bin/tinycap /tmp/r11t-headset.wav -D 0 -d 0 -c 1 -r 48000 -b 16 -t 3
+	/bin/tinycap /tmp/r11s-headset.wav -D 0 -d 0 -c 1 -r 48000 -b 16 -t 3
 	echo "headset_record_rc=$?"
-	ls -l /tmp/r11t-headset.wav
+	ls -l /tmp/r11s-headset.wav
 fi
 
 if [ "$mode" = speaker ]; then
@@ -429,8 +429,8 @@ if [ "$mode" = speaker ]; then
 	/bin/tinymix set 'SEC_MI2S_RX Audio Mixer MultiMedia1' 1 || exit 1
 	/bin/tinymix set 'Amp Input' Left || exit 1
 	mkdir -p /tmp
-	/bin/audio-tone /tmp/r11t-tone.raw || exit 1
-	/bin/tinyplay /tmp/r11t-tone.raw -D 0 -d 0 -i raw -c 2 -r 48000 -b 16 -p 480 -n 8
+	/bin/audio-tone /tmp/r11s-tone.raw || exit 1
+	/bin/tinyplay /tmp/r11s-tone.raw -D 0 -d 0 -i raw -c 2 -r 48000 -b 16 -p 480 -n 8
 	echo "speaker_play_rc=$?"
 fi
 
@@ -562,7 +562,7 @@ for f in /mnt/modem/image/modem.b*; do
 done
 
 echo "=== load transport stack ==="
-for m in rmtfs_mem libarc4 rfkill cfg80211 mac80211 ath qmi_helpers qrtr qrtr-smd qcom_pdr_msg pdr_interface qcom-r11t-memshare qcom_pd_mapper mdt_loader qcom_pil_info qcom_common qcom_aoss qcom_sysmon ipa2-lite qcom_q6v5 qcom_q6v5_mss; do
+for m in rmtfs_mem libarc4 rfkill cfg80211 mac80211 ath qmi_helpers qrtr qrtr-smd qcom_pdr_msg pdr_interface qcom-r11s-memshare qcom_pd_mapper mdt_loader qcom_pil_info qcom_common qcom_aoss qcom_sysmon ipa2-lite qcom_q6v5 qcom_q6v5_mss; do
 	[ -f "/lib/modules/${m}.ko" ] || { echo "missing $m.ko"; continue; }
 	insmod "/lib/modules/${m}.ko" 2>/dev/null || true
 done
@@ -741,7 +741,7 @@ done
 
 stty -F /dev/ttyGS0 raw -echo
 exec </dev/ttyGS0 >/dev/ttyGS0 2>&1
-echo "OPPO R11T mainline Linux diagnostic shell"
+echo "OPPO R11S mainline Linux diagnostic shell"
 echo "Helpers: test_keys | test_display | test_touch | test_gpu | test_wifi | test_bt | test_audio | test_battery | test_leds | test_usb_host"
 uname -a
 cat /sys/firmware/devicetree/base/model

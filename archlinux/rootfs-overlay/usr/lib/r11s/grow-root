@@ -1,0 +1,10 @@
+#!/bin/sh
+set -eu
+
+root_dev=$(findmnt -n -o SOURCE /)
+case "$root_dev" in
+	/dev/*) ;;
+	*) echo "cannot resolve the root device: $root_dev" >&2; exit 1 ;;
+esac
+resize2fs "$root_dev"
+touch /var/lib/r11s-state/root-grown

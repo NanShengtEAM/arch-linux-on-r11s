@@ -23,13 +23,13 @@ resolve_userdata() {
 emergency_shell() {
 	echo "Arch root mount failed: $*" >&2
 	mount -t configfs configfs /sys/kernel/config 2>/dev/null || true
-	g=/sys/kernel/config/usb_gadget/r11t-rescue
+	g=/sys/kernel/config/usb_gadget/r11s-rescue
 	mkdir -p "$g/strings/0x409" "$g/configs/c.1/strings/0x409"
 	echo 0x18d1 > "$g/idVendor"
 	echo 0xd004 > "$g/idProduct"
-	echo r11t-root-failure > "$g/strings/0x409/serialnumber"
+	echo r11s-root-failure > "$g/strings/0x409/serialnumber"
 	echo OPPO > "$g/strings/0x409/manufacturer"
-	echo 'R11T root mount failure' > "$g/strings/0x409/product"
+	echo 'R11S root mount failure' > "$g/strings/0x409/product"
 	echo 'Emergency ACM console' > "$g/configs/c.1/strings/0x409/configuration"
 	mkdir -p "$g/functions/acm.usb0"
 	[ -e "$g/configs/c.1/acm.usb0" ] || \
@@ -43,8 +43,8 @@ emergency_shell() {
 
 ROOT_DEV=$(resolve_userdata) || emergency_shell 'userdata partition not found'
 mkdir -p /newroot
-mount -t btrfs -o rw,noatime,compress=zstd:3,space_cache=v2,subvol=@ \
-	"$ROOT_DEV" /newroot || emergency_shell "cannot mount $ROOT_DEV subvol=@"
+mount -t ext4 -o rw,noatime "$ROOT_DEV" /newroot \
+	|| emergency_shell "cannot mount $ROOT_DEV as ext4 root"
 [ -x /newroot/sbin/init ] || emergency_shell '/sbin/init is missing'
 
 mkdir -p /newroot/dev /newroot/proc /newroot/sys

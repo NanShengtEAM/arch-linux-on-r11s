@@ -5,7 +5,7 @@
 
 int main(int argc, char **argv)
 {
-	const char *path = argc > 1 ? argv[1] : "/tmp/r11t-tone.raw";
+	const char *path = argc > 1 ? argv[1] : "/tmp/r11s-tone.raw";
 	FILE *stream;
 	unsigned int frame;
 

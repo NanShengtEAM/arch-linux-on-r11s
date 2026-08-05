@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-mkdir -p /dev/disk/by-partlabel /run/r11t
+mkdir -p /dev/disk/by-partlabel /run/r11s
 for block in /sys/class/block/mmcblk*p*; do
 	[ -r "$block/uevent" ] || continue
 	name=$(sed -n 's/^PARTNAME=//p' "$block/uevent")
@@ -18,7 +18,7 @@ done
 
 for module in \
 	rmtfs_mem libarc4 rfkill cfg80211 mac80211 ath qmi_helpers \
-	qrtr qrtr-smd qcom_pdr_msg pdr_interface qcom-r11t-memshare \
+	qrtr qrtr-smd qcom_pdr_msg pdr_interface qcom-r11s-memshare \
 	qcom_pd_mapper mdt_loader qcom_pil_info qcom_common qcom_aoss \
 	qcom_sysmon ipa2-lite qcom_q6v5 qcom_q6v5_mss; do
 	modprobe "$module"

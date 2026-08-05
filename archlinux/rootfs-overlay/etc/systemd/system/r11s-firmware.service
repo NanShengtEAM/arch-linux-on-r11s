@@ -1,0 +1,12 @@
+[Unit]
+Description=Prepare OPPO R11S firmware links
+After=local-fs.target
+Before=r11s-local-hardware.service r11s-transport.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/lib/r11s/prepare-firmware
+
+[Install]
+WantedBy=r11s-hardware.target

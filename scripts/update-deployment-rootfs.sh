@@ -3,8 +3,8 @@ set -euo pipefail
 
 ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 IMAGE=${1:-}
-BOOT_IMAGE=${2:-$ROOT/linux/build/boot-r11t-arch.img}
-MOUNT_ROOT=/tmp/r11t-update-root
+BOOT_IMAGE=${2:-$ROOT/linux/build/boot-r11s-arch.img}
+MOUNT_ROOT=/tmp/r11s-update-root
 LOOP=
 
 usage() {
@@ -25,7 +25,6 @@ usage() {
 
 cleanup() {
 	set +e
-	mountpoint -q "$MOUNT_ROOT/.snapshots" && umount "$MOUNT_ROOT/.snapshots"
 	mountpoint -q "$MOUNT_ROOT" && umount "$MOUNT_ROOT"
 	[[ -n $LOOP ]] && losetup -d "$LOOP"
 }
@@ -33,19 +32,16 @@ trap cleanup EXIT
 
 mkdir -p "$MOUNT_ROOT"
 LOOP=$(losetup --find --show "$IMAGE")
-mount -o subvol=@,compress=zstd:3,noatime,space_cache=v2 "$LOOP" "$MOUNT_ROOT"
-mkdir -p "$MOUNT_ROOT/.snapshots"
-mount -o subvol=@snapshots,compress=zstd:3,noatime,space_cache=v2 \
-	"$LOOP" "$MOUNT_ROOT/.snapshots"
+mount -o rw,noatime "$LOOP" "$MOUNT_ROOT"
 
 cp -a --no-preserve=ownership "$ROOT/archlinux/rootfs-overlay/." "$MOUNT_ROOT/"
 grep -qxF DisableSandbox "$MOUNT_ROOT/etc/pacman.conf" ||
 	sed -i '/^\[options\]$/a DisableSandbox' "$MOUNT_ROOT/etc/pacman.conf"
 install -m 0755 "$ROOT/linux/build/initramfs-root/bin/bt-hci-test" \
-	"$MOUNT_ROOT/usr/lib/r11t/bt-hci-test"
-install -m 0644 "$BOOT_IMAGE" "$MOUNT_ROOT/usr/lib/r11t/boot-r11t-arch.img"
+	"$MOUNT_ROOT/usr/lib/r11s/bt-hci-test"
+install -m 0644 "$BOOT_IMAGE" "$MOUNT_ROOT/usr/lib/r11s/boot-r11s-arch.img"
 
-if [[ ${R11T_SKIP_MODULE_INSTALL:-0} != 1 ]]; then
+if [[ ${R11S_SKIP_MODULE_INSTALL:-0} != 1 ]]; then
 	make -C "$ROOT/linux" O=build ARCH=arm64 INSTALL_MOD_PATH="$MOUNT_ROOT" \
 		INSTALL_MOD_STRIP=1 modules_install
 fi
@@ -58,27 +54,20 @@ kernel_release=${1##*/}
 rm -f "$1/build" "$1/source"
 depmod -b "$MOUNT_ROOT" "$kernel_release"
 
-if [[ -n ${R11T_PASSWORD:-} ]]; then
-	printf 'root:%s\nalarm:%s\n' "$R11T_PASSWORD" "$R11T_PASSWORD" | \
+if [[ -n ${R11S_PASSWORD:-} ]]; then
+	printf 'root:%s\nalarm:%s\n' "$R11S_PASSWORD" "$R11S_PASSWORD" | \
 		chroot "$MOUNT_ROOT" /usr/sbin/chpasswd
 fi
 
 for unit in NetworkManager.service bluetooth.service sshd.service \
-	r11t-usb-gadget.service serial-getty@ttyGS0.service fstrim.timer \
-	r11t-grow-root.service r11t-hardware.target sddm.service; do
+	r11s-usb-gadget.service serial-getty@ttyGS0.service fstrim.timer \
+	r11s-grow-root.service r11s-hardware.target sddm.service; do
 	systemctl --root="$MOUNT_ROOT" enable "$unit" >/dev/null
 done
 
-if btrfs subvolume show "$MOUNT_ROOT/.snapshots/1-installation" >/dev/null 2>&1; then
-	btrfs property set -ts "$MOUNT_ROOT/.snapshots/1-installation" ro false
-	btrfs subvolume delete "$MOUNT_ROOT/.snapshots/1-installation"
-fi
-btrfs subvolume snapshot -r "$MOUNT_ROOT" "$MOUNT_ROOT/.snapshots/1-installation"
 sync
-
-umount "$MOUNT_ROOT/.snapshots"
 umount "$MOUNT_ROOT"
 losetup -d "$LOOP"
 LOOP=
-btrfs check --readonly "$IMAGE"
+e2fsck -fn "$IMAGE"
 sha256sum "$IMAGE" "$BOOT_IMAGE"

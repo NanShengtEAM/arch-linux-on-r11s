@@ -1,8 +1,8 @@
-# OPPO R11T 主线 Linux Wi-Fi 适配复盘
+# OPPO R11S 主线 Linux Wi-Fi 适配复盘
 
 ## 1. 最终结果
 
-OPPO R11T 的 WCN3990 Wi-Fi 已在当前主线 Linux 诊断系统中完成硬件验证。
+OPPO R11S 的 WCN3990 Wi-Fi 已在当前主线 Linux 诊断系统中完成硬件验证。
 
 最终冷启动测试满足以下条件：
 
@@ -18,7 +18,7 @@ OPPO R11T 的 WCN3990 Wi-Fi 已在当前主线 Linux 诊断系统中完成硬件
 最终硬件验证镜像：
 
 ```text
-recovery-r11t-diag.img
+recovery-r11s-diag.img
 SHA-256: 4d9fd47f69cb44e93d16d244e3d557e77e3e4d33aa0042e8551557db11b4ff13
 size: 45,760,512 bytes (11,172 x 4096-byte pages)
 ```
@@ -30,7 +30,7 @@ size: 45,760,512 bytes (11,172 x 4096-byte pages)
 
 ## 2. 为什么这不是普通的 ath10k 适配
 
-R11T 的 WCN3990 不是一块可以由 Linux 单独启动的 PCIe/USB Wi-Fi 芯片。它位于 Qualcomm modem 子系统的 WLAN user protection domain 中，实际启动链为：
+R11S 的 WCN3990 不是一块可以由 Linux 单独启动的 PCIe/USB Wi-Fi 芯片。它位于 Qualcomm modem 子系统的 WLAN user protection domain 中，实际启动链为：
 
 ```text
 MSS/MPSS
@@ -75,7 +75,7 @@ qcom-q6v5-mss 4080000.remoteproc: fatal error without message
 
 ### 4.1 recovery 不是普通的临时启动槽
 
-R11T bootloader 不支持 `fastboot boot`，会返回 `unknown command`。测试只能把诊断镜像写入 recovery，再从 Android 执行：
+R11S bootloader 不支持 `fastboot boot`，会返回 `unknown command`。测试只能把诊断镜像写入 recovery，再从 Android 执行：
 
 ```sh
 adb reboot recovery
@@ -150,7 +150,7 @@ stock 大致顺序为：
 
 ### 6.2 仅加入 ipa2-lite
 
-SDM660 社区树使用 `ipa2-lite`，不是上游 GSI IPA。将其移植到 R11T 后：
+SDM660 社区树使用 `ipa2-lite`，不是上游 GSI IPA。将其移植到 R11S 后：
 
 - IPA probe 成功。
 - 创建 `ipa_lan0` 和 `rmnet_ipa0`。
@@ -333,17 +333,17 @@ message: GET_BUFF_ADDR (0x23)
 
 ### 9.2 最小 RFSA server
 
-RFSA 被加入 R11T 的本地 Qualcomm 服务模块：
+RFSA 被加入 R11S 的本地 Qualcomm 服务模块：
 
 ```text
-drivers/soc/qcom/qcom_r11t_memshare.c
+drivers/soc/qcom/qcom_r11s_memshare.c
 ```
 
 这个模块现在同时承担：
 
 - DHMS/memshare service `0x34/1/1`。
 - RFSA service `0x1c/1/1`。
-- R11T 启动期 WLAN PDR listener。
+- R11S 启动期 WLAN PDR listener。
 
 第一次 RFSA 请求已经证明根因：
 
@@ -435,7 +435,7 @@ ln -sfn /mnt/modem/image/modem_pr /lib/firmware/modem_pr
 可靠顺序是：
 
 1. 加载 QRTR、`qcom_pdr_msg` 和 `pdr_interface`。
-2. R11T 服务模块先创建 `wlan/fw` lookup。
+2. R11S 服务模块先创建 `wlan/fw` lookup。
 3. AP-local `qcom_pd_mapper` 发布静态映射：
 
    ```text
@@ -451,16 +451,16 @@ ln -sfn /mnt/modem/image/modem_pr /lib/firmware/modem_pr
 
 ### Kernel/DTS
 
-- `arch/arm64/boot/dts/qcom/sdm660-oppo-r11t.dts`
+- `arch/arm64/boot/dts/qcom/sdm660-oppo-r11s.dts`
   - 修正 MPSS/MBA/ADSP/CDSP reserved-memory。
   - 增加 client 4 `0xf6b00000/1 MiB`。
   - 为 client 4 分配 `QCOM_SCM_VMID_MSS_MSA`。
-  - 启用 R11T memshare/RFSA 服务和 MSS/Wi-Fi 节点。
-- `drivers/soc/qcom/qcom_r11t_memshare.c`
+  - 启用 R11S memshare/RFSA 服务和 MSS/Wi-Fi 节点。
+- `drivers/soc/qcom/qcom_r11s_memshare.c`
   - DHMS `0x34/1/1`。
   - RFSA `0x1c/1/1`, message `0x23`。
   - WLAN PDR lookup/listener。
-- `drivers/soc/qcom/qcom_r11t_memshare_qmi.[ch]`
+- `drivers/soc/qcom/qcom_r11s_memshare_qmi.[ch]`
   - Qualcomm memshare QMI IDL encoding tables。
 - `drivers/net/ipa2-lite/`
   - SDM660 IPA2/BAM 支持。
@@ -526,7 +526,7 @@ nl80211-scan:
 rmtfs:
 65d7b5c50b595b8c961deaabb3622ef9f9e0c2af749c681541eb7445350ea3f4
 
-qcom-r11t-memshare.ko:
+qcom-r11s-memshare.ko:
 9e61355d5dcdd841c93bb6e11aacfb2f13823a21ef054b3d84e9196917ba2c40
 ```
 

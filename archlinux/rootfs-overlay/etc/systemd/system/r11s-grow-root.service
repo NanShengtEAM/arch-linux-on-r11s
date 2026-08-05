@@ -1,0 +1,12 @@
+[Unit]
+Description=Grow OPPO R11S ext4 root to the userdata partition
+After=local-fs.target
+Before=r11s-hardware.target
+ConditionPathExists=!/var/lib/r11s-state/root-grown
+
+[Service]
+Type=oneshot
+ExecStart=/usr/lib/r11s/grow-root
+
+[Install]
+WantedBy=multi-user.target

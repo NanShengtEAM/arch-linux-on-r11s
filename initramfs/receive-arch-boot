@@ -20,7 +20,7 @@ done
 
 [ "$CONFIRM" -eq 1 ] || { echo 'ERROR: --confirm is required' >&2; exit 1; }
 case " $(cat /proc/cmdline) " in
-	*' r11t.storage_write=1 '*) ;;
+	*' r11s.storage_write=1 '*) ;;
 	*) echo 'ERROR: this recovery image has storage writes disabled' >&2; exit 1 ;;
 esac
 case "$BYTES" in ''|*[!0-9]*) usage ;; esac
@@ -54,7 +54,7 @@ for dev in "$BOOT" "$BOOTBAK"; do
 done
 
 PAGES=$((BYTES / 4096))
-TMP=/tmp/r11t-new-boot.img
+TMP=/tmp/r11s-new-boot.img
 rm -f "$TMP"
 echo "Listening on 172.31.66.1:5555 for $BYTES decompressed boot bytes"
 export LD_LIBRARY_PATH=/lib

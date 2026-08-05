@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT=/home/hedc/OPPO_R11_Mainline
+ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 LINUX="$ROOT/linux"
 BUILD="$LINUX/build"
 SRC_INIT="$ROOT/initramfs"
@@ -46,7 +46,7 @@ llvm-strip "$IR/bin/audio-tone"
 aarch64-linux-gnu-gcc -static -Os -Wall -Wextra -Werror \
 	-o "$IR/bin/reboot-mode" "$SRC_INIT/reboot-mode.c"
 llvm-strip "$IR/bin/reboot-mode"
-TINYALSA_UTILS=${TINYALSA_UTILS:-/tmp/opencode/tinyalsa-r11t/utils}
+TINYALSA_UTILS=${TINYALSA_UTILS:-/tmp/opencode/tinyalsa-r11s/utils}
 for tool in tinymix tinyplay tinycap; do
 	if [ -x "$TINYALSA_UTILS/$tool" ]; then
 		cp -a "$TINYALSA_UTILS/$tool" "$IR/bin/$tool"
@@ -108,7 +108,7 @@ mods=(
 	"$BUILD/drivers/net/wireless/ath/ath.ko"
 	"$BUILD/drivers/soc/qcom/qmi_helpers.ko"
 	"$BUILD/drivers/soc/qcom/rmtfs_mem.ko"
-	"$BUILD/drivers/soc/qcom/qcom-r11t-memshare.ko"
+	"$BUILD/drivers/soc/qcom/qcom-r11s-memshare.ko"
 	"$BUILD/drivers/soc/qcom/qcom_pdr_msg.ko"
 	"$BUILD/drivers/soc/qcom/pdr_interface.ko"
 	"$BUILD/drivers/soc/qcom/qcom_pd_mapper.ko"
@@ -189,7 +189,7 @@ cp -a /usr/lib/firmware/ath10k/WCN3990/hw1.0/firmware-5.bin \
 	"$IR/lib/firmware/ath10k/WCN3990/hw1.0/"
 cp -a /usr/lib/firmware/ath10k/WCN3990/hw1.0/board-2.bin \
 	"$IR/lib/firmware/ath10k/WCN3990/hw1.0/"
-# R11T BDF reference (for later board-2 packaging; not consumed raw by ath10k).
+# R11S BDF reference (for later board-2 packaging; not consumed raw by ath10k).
 cp -a "$ROOT"/device-info/firmware/wifi/bdwlan_16051.bin \
 	"$IR/lib/firmware/ath10k/WCN3990/hw1.0/" || true
 
@@ -207,15 +207,15 @@ done
 
 # Rebuild DTB (touch DTS changes) and image.
 make -C "$LINUX" O=build ARCH=arm64 LLVM=1 -j"$(nproc)" \
-	qcom/sdm660-oppo-r11t.dtb Image.gz
+	qcom/sdm660-oppo-r11s.dtb Image.gz
 
 # Pack initramfs.
 (
 	cd "$IR"
 	find . -print0 | cpio --null -ov --format=newc
-) | gzip -9 > "$BUILD/r11t-initramfs.cpio.gz"
+) | gzip -9 > "$BUILD/r11s-initramfs.cpio.gz"
 
-ramdisk_size=$(stat -c %s "$BUILD/r11t-initramfs.cpio.gz")
+ramdisk_size=$(stat -c %s "$BUILD/r11s-initramfs.cpio.gz")
 ramdisk_limit=$((0x85600000 - 0x83000000))
 if (( ramdisk_size >= ramdisk_limit )); then
 	printf 'ERROR: ramdisk size %d crosses firmware reservation at 0x85600000\n' \
@@ -227,7 +227,7 @@ printf 'Ramdisk boundary: 0x%x (%d bytes free)\n' \
 
 # Append DTB to Image.gz for Qualcomm bootloader selection.
 cp "$BUILD/arch/arm64/boot/Image.gz" "$BUILD/arch/arm64/boot/Image.gz-dtb"
-dd if="$BUILD/arch/arm64/boot/dts/qcom/sdm660-oppo-r11t.dtb" \
+dd if="$BUILD/arch/arm64/boot/dts/qcom/sdm660-oppo-r11s.dtb" \
 	of="$BUILD/arch/arm64/boot/Image.gz-dtb" oflag=append conv=notrunc status=none
 
 # Kernel at 0x80008000 expands ~27MiB. Firmware reserved begins at 0x85600000.
@@ -235,7 +235,7 @@ dd if="$BUILD/arch/arm64/boot/dts/qcom/sdm660-oppo-r11t.dtb" \
 # leaving ~38MiB before 0x85600000. Do NOT use 0x84000000 once initramfs >22MiB.
 mkbootimg \
 	--kernel "$BUILD/arch/arm64/boot/Image.gz-dtb" \
-	--ramdisk "$BUILD/r11t-initramfs.cpio.gz" \
+	--ramdisk "$BUILD/r11s-initramfs.cpio.gz" \
 	--pagesize 4096 \
 	--base 0x80000000 \
 	--kernel_offset 0x00008000 \
@@ -246,11 +246,12 @@ mkbootimg \
 	--os_version 9.0.0 \
 	--os_patch_level 2019-09 \
 	--cmdline 'console=tty0 console=ttyMSM0,115200n8 androidboot.console=ttyMSM0 earlycon=msm_serial_dm,0xc170000 androidboot.hardware=qcom user_debug=31 printk.devkmsg=on loglevel=8 ignore_loglevel keep_bootcon panic=10 root=/dev/ram0 rw rdinit=/init init=/init' \
-	-o "$BUILD/recovery-r11t-diag.img"
+	-o "$BUILD/recovery-r11s-diag.img"
 
 echo "=== image info ==="
-unpack_bootimg --boot_img "$BUILD/recovery-r11t-diag.img" --format=info
-sha256sum "$BUILD/recovery-r11t-diag.img"
-ls -lh "$BUILD/recovery-r11t-diag.img" "$BUILD/r11t-initramfs.cpio.gz"
+rm -rf "$BUILD/unpack-verify"
+unpack_bootimg --boot_img "$BUILD/recovery-r11s-diag.img" --out "$BUILD/unpack-verify" >/dev/null
+sha256sum "$BUILD/recovery-r11s-diag.img"
+ls -lh "$BUILD/recovery-r11s-diag.img" "$BUILD/r11s-initramfs.cpio.gz"
 echo "modules:"; ls -1 "$IR/lib/modules" | wc -l
 du -sh "$IR" "$IR/lib/firmware" "$IR/lib/modules"

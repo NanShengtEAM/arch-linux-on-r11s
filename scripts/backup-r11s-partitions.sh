@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-OUTPUT=${1:-"$HOME/R11T-backups/$(date -u +%Y%m%dT%H%M%SZ)"}
+OUTPUT=${1:-"$HOME/R11S-backups/$(date -u +%Y%m%dT%H%M%SZ)"}
 mkdir -p "$OUTPUT"
 chmod 0700 "$OUTPUT"
 [[ -z $(find "$OUTPUT" -mindepth 1 -maxdepth 1 -print -quit) ]] || {

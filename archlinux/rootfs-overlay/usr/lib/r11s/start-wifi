@@ -22,7 +22,7 @@ state=$(cat "$mss/state")
 
 mac=
 for retry in $(seq 1 10); do
-	mac=$(/usr/lib/r11t/wifi-mac 2>/dev/null) && break
+	mac=$(/usr/lib/r11s/wifi-mac 2>/dev/null) && break
 	sleep 1
 done
 [ -n "$mac" ] || { echo 'Could not read WLAN MAC from modem DMS' >&2; exit 1; }

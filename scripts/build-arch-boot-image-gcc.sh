@@ -8,10 +8,10 @@ BUSYBOX=${BUSYBOX:-$LINUX/build/initramfs-root/bin/busybox}
 KERNEL_LOCALVERSION=${LOCALVERSION:--sdm660-gcc+}
 WORK="$BUILD/arch-initramfs-root"
 MODULES_ROOT="$BUILD/modules-gcc-root"
-MODULES_ARCHIVE=${MODULES_ARCHIVE:-$BUILD/modules-r11t-gcc.tar.zst}
-RAMDISK="$BUILD/r11t-arch-initramfs.cpio.gz"
+MODULES_ARCHIVE=${MODULES_ARCHIVE:-$BUILD/modules-r11s-gcc.tar.zst}
+RAMDISK="$BUILD/r11s-arch-initramfs.cpio.gz"
 KERNEL_DTB="$BUILD/arch/arm64/boot/Image.gz-dtb"
-OUTPUT=${OUTPUT:-$BUILD/boot-r11t-arch-gcc.img}
+OUTPUT=${OUTPUT:-$BUILD/boot-r11s-arch-gcc.img}
 
 [ -x "$BUSYBOX" ] || {
 	echo "ERROR: static AArch64 busybox not found at $BUSYBOX" >&2
@@ -32,7 +32,7 @@ make -C "$LINUX" O="$BUILD" ARCH=arm64 LOCALVERSION= \
 	CC=gcc LD=ld.bfd olddefconfig
 make -C "$LINUX" O="$BUILD" ARCH=arm64 LOCALVERSION= \
 	CC=gcc LD=ld.bfd -j"$(nproc)" \
-	Image.gz qcom/sdm660-oppo-r11t.dtb modules
+	Image.gz qcom/sdm660-oppo-r11s.dtb modules
 
 kernel_release=$(make -s -C "$LINUX" O="$BUILD" ARCH=arm64 \
 	LOCALVERSION= CC=gcc LD=ld.bfd kernelrelease)
@@ -75,7 +75,7 @@ if (( ramdisk_size >= ramdisk_limit )); then
 fi
 
 cp "$BUILD/arch/arm64/boot/Image.gz" "$KERNEL_DTB"
-dd if="$BUILD/arch/arm64/boot/dts/qcom/sdm660-oppo-r11t.dtb" \
+dd if="$BUILD/arch/arm64/boot/dts/qcom/sdm660-oppo-r11s.dtb" \
 	of="$KERNEL_DTB" oflag=append conv=notrunc status=none
 
 mkbootimg \
@@ -90,7 +90,7 @@ mkbootimg \
 	--header_version 1 \
 	--os_version 9.0.0 \
 	--os_patch_level 2019-09 \
-	--cmdline 'console=tty0 console=ttyMSM0,115200n8 earlycon=msm_serial_dm,0xc170000 loglevel=7 panic=10 root=PARTLABEL=userdata rootfstype=btrfs rootflags=subvol=@,compress=zstd:3,noatime,space_cache=v2 rootwait rw rdinit=/init' \
+	--cmdline 'console=tty0 console=ttyMSM0,115200n8 earlycon=msm_serial_dm,0xc170000 loglevel=7 panic=10 root=PARTLABEL=userdata rootfstype=ext4 rootwait rw rdinit=/init' \
 	-o "$OUTPUT"
 
 image_size=$(stat -c %s "$OUTPUT")
@@ -103,4 +103,5 @@ printf 'GCC kernel release: %s\n' "$kernel_release"
 printf 'Production ramdisk end: 0x%x (%d bytes free)\n' \
 	$((0x83000000 + ramdisk_size)) $((ramdisk_limit - ramdisk_size))
 sha256sum "$OUTPUT" "$MODULES_ARCHIVE"
-unpack_bootimg --boot_img "$OUTPUT" --format=info
+rm -rf "$BUILD/unpack-verify"
+unpack_bootimg --boot_img "$OUTPUT" --out "$BUILD/unpack-verify" >/dev/null

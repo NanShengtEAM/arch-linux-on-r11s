@@ -13,7 +13,7 @@ if [[ -z $INTERFACE ]]; then
 	done
 fi
 [[ -n $INTERFACE && -d /sys/class/net/$INTERFACE ]] || {
-	echo 'ERROR: R11T ECM interface was not found' >&2
+	echo 'ERROR: R11S ECM interface was not found' >&2
 	exit 1
 }
 
