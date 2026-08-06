@@ -39,6 +39,32 @@ git clone --depth 1 -b qcom-sdm660-7.0.y \
     https://gh-proxy.com/https://github.com/NanShengtEAM/linux-sdm660-oppor11_s.git linux
 ```
 
+### Note for mainland China networks (国内镜像源)
+
+Direct access to `github.com` is often slow or interrupted from mainland China.
+The `gh-proxy.com` prefix in the clone URL above is a GitHub reverse proxy that
+speeds up `git clone` and file downloads. The build scripts clone dependencies
+(tinyalsa) through the same proxy automatically.
+
+If `gh-proxy.com` is down or slow, alternatives:
+
+- `https://ghfast.top/https://github.com/<owner>/<repo>.git`
+- `https://gh-proxy.net/https://github.com/<owner>/<repo>.git`
+- Mirror on Gitee: search the repo name on <https://gitee.com> and clone from
+  there, then later sync to the official GitHub origin.
+
+To fall back to the official source, just drop the proxy prefix:
+
+```sh
+git clone --depth 1 -b qcom-sdm660-7.0.y \
+    https://github.com/NanShengtEAM/linux-sdm660-oppor11_s.git linux
+```
+
+For updating an existing clone where `git pull` fails with TLS errors, use the
+same prefix on the fetch URL (see the proxy section above) and switch back to
+the official URL afterwards. Pushes must always go to the official
+`github.com` origin.
+
 Install the host prerequisites (Debian 12):
 
 ```sh

@@ -27,6 +27,28 @@ git clone --depth 1 -b qcom-sdm660-7.0.y \
     https://gh-proxy.com/https://github.com/NanShengtEAM/linux-sdm660-oppor11_s.git linux
 ```
 
+### 国内镜像源说明
+
+大陆网络直连 `github.com` 常会慢或被中断。上面克隆地址里的 `gh-proxy.com`
+前缀是一个 GitHub 反向代理，可加速 `git clone` 与文件下载。构建脚本自动
+通过同一代理克隆依赖（如 tinyalsa）。
+
+若 `gh-proxy.com` 失效或变慢，可换用：
+
+- `https://ghfast.top/https://github.com/<owner>/<repo>.git`
+- `https://gh-proxy.net/https://github.com/<owner>/<repo>.git`
+- 在 <https://gitee.com> 搜索同名仓库镜像，克隆后再同步回官方 GitHub origin
+
+如需回退官方源，去掉代理前缀即可：
+
+```sh
+git clone --depth 1 -b qcom-sdm660-7.0.y \
+    https://github.com/NanShengtEAM/linux-sdm660-oppor11_s.git linux
+```
+
+对已有克隆执行 `git pull` 遇到 TLS 错误时，可临时把 fetch 地址加上上述前缀，
+拉完再改回官方地址。推送必须始终使用官方 `github.com` origin。
+
 安装主机前置依赖（Debian 12）：
 
 ```sh

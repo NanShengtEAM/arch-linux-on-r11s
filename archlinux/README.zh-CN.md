@@ -71,6 +71,8 @@ git clone --depth 1 -b qcom-sdm660-7.0.y \
 make -C linux O=build ARCH=arm64 LLVM=1 sdm660_defconfig
 ```
 
+大陆网络下 `gh-proxy.com` 前缀可加速克隆；替代镜像与回退方法见根 `README.md` 的国内镜像源说明。
+
 主线内核树携带 R11S 设备树为 `arch/arm64/boot/dts/qcom/sdm660-oppo-r11s.dts`（compatible `oppo,r11s`），调制解调器 memshare 模块为 `drivers/soc/qcom/qcom-r11s-memshare.ko`（Kconfig 符号 `QCOM_R11S_MEMSHARE`）。引导镜像将 DTB 追加到 `Image.gz`，以便 Qualcomm 引导加载程序选择它。
 
 ### 2. 编译内核与模块

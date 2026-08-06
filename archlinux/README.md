@@ -96,6 +96,9 @@ git clone --depth 1 -b qcom-sdm660-7.0.y \
 make -C linux O=build ARCH=arm64 LLVM=1 sdm660_defconfig
 ```
 
+For mainland China networks, the `gh-proxy.com` prefix speeds up the clone; see
+the mirror note in the root `README.md` for alternatives and fallback.
+
 The mainline tree carries the R11S device tree as
 `arch/arm64/boot/dts/qcom/sdm660-oppo-r11s.dts` (compatible `oppo,r11s`) and
 the modem memshare module as `drivers/soc/qcom/qcom-r11s-memshare.ko`
