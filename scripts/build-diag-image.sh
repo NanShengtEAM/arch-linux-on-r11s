@@ -8,6 +8,14 @@ SRC_INIT="$ROOT/initramfs"
 IR="$BUILD/initramfs-root"
 KVER=$(make -C "$LINUX" O=build ARCH=arm64 LLVM=1 -s kernelrelease)
 
+# GNU strip handles aarch64 static binaries more reliably than llvm-strip,
+# which can fail with "Link field value ... is not a symbol table".
+if command -v aarch64-linux-gnu-strip >/dev/null 2>&1; then
+	STRIP=aarch64-linux-gnu-strip
+else
+	STRIP=${STRIP:-llvm-strip}
+fi
+
 echo "Kernel release: $KVER"
 
 # Preserve busybox if present; rebuild root otherwise.
@@ -32,30 +40,30 @@ fi
 chmod 0755 "$IR/bin/gpu-msm-probe"
 aarch64-linux-gnu-gcc -static -Os -Wall -Wextra \
 	-o "$IR/bin/nl80211-scan" "$SRC_INIT/nl80211-scan.c"
-llvm-strip "$IR/bin/nl80211-scan"
+$STRIP "$IR/bin/nl80211-scan"
 aarch64-linux-gnu-gcc -static -Os -Wall -Wextra \
 	-o "$IR/bin/test_keys" "$SRC_INIT/key-test.c"
-llvm-strip "$IR/bin/test_keys"
+$STRIP "$IR/bin/test_keys"
 aarch64-linux-gnu-gcc -static -Os -Wall -Wextra \
 	-o "$IR/bin/bt-hci-test" "$SRC_INIT/bt-hci-test.c"
-llvm-strip "$IR/bin/bt-hci-test"
+$STRIP "$IR/bin/bt-hci-test"
 aarch64-linux-gnu-gcc -static -Os -Wall -Wextra -Werror \
 	-o "$IR/bin/wifi-mac" "$SRC_INIT/wifi-mac.c"
-llvm-strip "$IR/bin/wifi-mac"
+$STRIP "$IR/bin/wifi-mac"
 aarch64-linux-gnu-gcc -static -Os -Wall -Wextra -Werror \
 	-o "$IR/bin/audio-jack-test" "$SRC_INIT/audio-jack-test.c"
-llvm-strip "$IR/bin/audio-jack-test"
+$STRIP "$IR/bin/audio-jack-test"
 aarch64-linux-gnu-gcc -static -Os -Wall -Wextra -Werror \
 	-o "$IR/bin/audio-tone" "$SRC_INIT/audio-tone.c"
-llvm-strip "$IR/bin/audio-tone"
+$STRIP "$IR/bin/audio-tone"
 aarch64-linux-gnu-gcc -static -Os -Wall -Wextra -Werror \
 	-o "$IR/bin/reboot-mode" "$SRC_INIT/reboot-mode.c"
-llvm-strip "$IR/bin/reboot-mode"
+$STRIP "$IR/bin/reboot-mode"
 TINYALSA_UTILS=${TINYALSA_UTILS:-/tmp/opencode/tinyalsa-r11s/utils}
 for tool in tinymix tinyplay tinycap; do
 	if [ -x "$TINYALSA_UTILS/$tool" ]; then
 		cp -a "$TINYALSA_UTILS/$tool" "$IR/bin/$tool"
-		llvm-strip "$IR/bin/$tool"
+		$STRIP "$IR/bin/$tool"
 	fi
 	if [ ! -x "$IR/bin/$tool" ]; then
 		echo "ERROR: missing static tinyalsa utility $tool" >&2
@@ -172,7 +180,7 @@ for m in "${mods[@]}"; do
 		continue
 	fi
 	cp -a "$m" "$IR/lib/modules/"
-	llvm-strip --strip-debug "$IR/lib/modules/$(basename "$m")"
+	$STRIP --strip-debug "$IR/lib/modules/$(basename "$m")"
 done
 
 # GPU firmware (OPPO signed ZAP + A530 microcode used by A512).
