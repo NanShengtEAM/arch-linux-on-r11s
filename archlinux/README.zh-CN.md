@@ -67,7 +67,7 @@ echo 'export PATH=/usr/local/llvm19-bin:$PATH' >> ~/.bashrc
 
 ```sh
 git clone --depth 1 -b qcom-sdm660-7.0.y \
-    https://github.com/NanShengtEAM/linux-sdm660-oppor11_s.git linux
+    https://gh-proxy.com/https://github.com/NanShengtEAM/linux-sdm660-oppor11_s.git linux
 make -C linux O=build ARCH=arm64 LLVM=1 sdm660_defconfig
 ```
 

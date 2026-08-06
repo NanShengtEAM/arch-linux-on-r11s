@@ -67,7 +67,8 @@ if [ ! -x "$TINYALSA_UTILS/tinymix" ] || [ ! -x "$TINYALSA_UTILS/tinyplay" ] || 
 	TINYALSA_SRC=/usr/local/src/tinyalsa
 	if [ ! -d "$TINYALSA_SRC" ]; then
 		git clone --depth 1 \
-			https://github.com/tinyalsa/tinyalsa.git "$TINYALSA_SRC"
+			https://gh-proxy.com/https://github.com/tinyalsa/tinyalsa.git \
+			"$TINYALSA_SRC"
 	fi
 	make -C "$TINYALSA_SRC/src" \
 		CC=aarch64-linux-gnu-gcc AR=aarch64-linux-gnu-ar

@@ -36,7 +36,7 @@ scripts expect it there):
 git clone git@github.com:NanShengtEAM/arch-linux-on-r11s.git
 cd arch-linux-on-r11s
 git clone --depth 1 -b qcom-sdm660-7.0.y \
-    https://github.com/NanShengtEAM/linux-sdm660-oppor11_s.git linux
+    https://gh-proxy.com/https://github.com/NanShengtEAM/linux-sdm660-oppor11_s.git linux
 ```
 
 Install the host prerequisites (Debian 12):

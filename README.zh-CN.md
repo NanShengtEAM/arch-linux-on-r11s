@@ -24,7 +24,7 @@ WCN3990 的 bring-up 历史、协议细节、已知问题及硬件验证证据�
 git clone git@github.com:NanShengtEAM/arch-linux-on-r11s.git
 cd arch-linux-on-r11s
 git clone --depth 1 -b qcom-sdm660-7.0.y \
-    https://github.com/NanShengtEAM/linux-sdm660-oppor11_s.git linux
+    https://gh-proxy.com/https://github.com/NanShengtEAM/linux-sdm660-oppor11_s.git linux
 ```
 
 安装主机前置依赖（Debian 12）：
