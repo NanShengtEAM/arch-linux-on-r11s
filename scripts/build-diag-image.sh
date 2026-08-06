@@ -60,6 +60,26 @@ aarch64-linux-gnu-gcc -static -Os -Wall -Wextra -Werror \
 	-o "$IR/bin/reboot-mode" "$SRC_INIT/reboot-mode.c"
 $STRIP "$IR/bin/reboot-mode"
 TINYALSA_UTILS=${TINYALSA_UTILS:-/tmp/opencode/tinyalsa-r11s/utils}
+if [ ! -x "$TINYALSA_UTILS/tinymix" ] || [ ! -x "$TINYALSA_UTILS/tinyplay" ] || \
+	[ ! -x "$TINYALSA_UTILS/tinycap" ]; then
+	echo "building static tinyalsa utils from source"
+	mkdir -p /usr/local/src
+	TINYALSA_SRC=/usr/local/src/tinyalsa
+	if [ ! -d "$TINYALSA_SRC" ]; then
+		git clone --depth 1 \
+			https://github.com/tinyalsa/tinyalsa.git "$TINYALSA_SRC"
+	fi
+	make -C "$TINYALSA_SRC/src" \
+		CC=aarch64-linux-gnu-gcc AR=aarch64-linux-gnu-ar
+	make -C "$TINYALSA_SRC/utils" \
+		CC=aarch64-linux-gnu-gcc AR=aarch64-linux-gnu-ar \
+		LDFLAGS="-L $TINYALSA_SRC/src -static" \
+		tinymix tinyplay tinycap
+	mkdir -p "$TINYALSA_UTILS"
+	for tool in tinymix tinyplay tinycap; do
+		cp -a "$TINYALSA_SRC/utils/$tool" "$TINYALSA_UTILS/$tool"
+	done
+fi
 for tool in tinymix tinyplay tinycap; do
 	if [ -x "$TINYALSA_UTILS/$tool" ]; then
 		cp -a "$TINYALSA_UTILS/$tool" "$IR/bin/$tool"
