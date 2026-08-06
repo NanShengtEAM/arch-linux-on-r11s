@@ -106,9 +106,9 @@ These three tools (rmtfs, tqftpserv, diag-router) are device bring-up
 binaries from the upstream r11t project and are not shipped in this
 repository.
 
-  rmtfs:       build from https://github.com/CPH1707-Mainline/rmtfs-sdm660-oppor11-t
-               (needs libqrtr headers and qmic; typically cross-built on the
-               bring-up host), then copy the static binary to \$IR/bin/rmtfs
+  rmtfs:       run scripts/build-rmtfs.sh to cross-build it automatically
+               (fetches libqrtr + eudev and produces a static aarch64 binary),
+               then re-run this script
   tqftpserv:   place the static binary at /usr/local/r11s/tqftpserv/tqftpserv.static
   diag-router: place the static binary at /usr/local/r11s/diag/diag-router
 

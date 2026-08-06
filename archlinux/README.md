@@ -136,10 +136,10 @@ The diagnostic image also bundles three device bring-up binaries that are not
 shipped in this repository (they come from the upstream r11t project). You must
 provide them before `build-diag-image.sh` succeeds:
 
-- `rmtfs`: built from
-  `https://github.com/CPH1707-Mainline/rmtfs-sdm660-oppor11-t` (needs libqrtr
-  headers and `qmic`; cross-built on the bring-up host). Copy the static
-  binary to `linux/build/initramfs-root/bin/rmtfs`.
+- `rmtfs`: run `scripts/build-rmtfs.sh` to cross-build it automatically. The
+  script fetches the libqrtr userspace library and eudev (for a static
+  `libudev.a`), cross-compiles everything with `aarch64-linux-gnu-gcc`, and
+  installs the static binary to `linux/build/initramfs-root/bin/rmtfs`.
 - `tqftpserv`: place the static binary at
   `/usr/local/r11s/tqftpserv/tqftpserv.static`.
 - `diag-router`: place the static binary at `/usr/local/r11s/diag/diag-router`.
