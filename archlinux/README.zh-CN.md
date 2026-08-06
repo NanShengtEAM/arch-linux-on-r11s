@@ -90,6 +90,8 @@ scripts/build-diag-image.sh
 
 该脚本构建带静态 busybox 的 AArch64 initramfs 根目录（位于 `linux/build/initramfs-root/bin/busybox`）和诊断用 `linux/build/r11s-initramfs.cpio.gz` / diag 引导镜像。生产与安装器镜像会复用这个 busybox，因此该脚本必须先于它们运行。
 
+如果还没有预先构建好的静态 busybox，先用 `scripts/build-static-busybox.sh` 构建它（用 `aarch64-linux-gnu-gcc` 以 `CONFIG_STATIC=y` 交叉编译 busybox 1.36.1，输出到 `linux/build/initramfs-root/bin/busybox`）：
+
 ### 4. 根与救援 ext4 文件系统镜像
 
 先创建精确尺寸的镜像（userdata 56933465600 B，system 3481272320 B）：

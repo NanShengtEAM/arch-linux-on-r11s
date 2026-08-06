@@ -124,6 +124,11 @@ This builds the AArch64 initramfs root with a static busybox at
 `linux/build/r11s-initramfs.cpio.gz` / diag boot image. The production and
 installer images reuse this busybox, so this script must run before them.
 
+If you do not have the prebuilt static busybox yet, build it first with
+`scripts/build-static-busybox.sh` (cross-compiles busybox 1.36.1 with
+`aarch64-linux-gnu-gcc` and `CONFIG_STATIC=y` into
+`linux/build/initramfs-root/bin/busybox`):
+
 ### 4. Root and rescue ext4 filesystem images
 
 Create exact-size images first (userdata 56933465600 B, system 3481272320 B):
