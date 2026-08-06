@@ -6,10 +6,11 @@ LINUX="$ROOT/linux"
 BUILD="$LINUX/build"
 SRC_INIT="$ROOT/initramfs"
 IR="$BUILD/initramfs-root"
-KVER=$(make -C "$LINUX" O=build ARCH=arm64 LLVM=1 -s kernelrelease)
 
 # Kernel 7.0 requires clang >= 15; if the default clang is too old, pick a
 # versioned one so LLVM=-NN uses clang-NN/llvm-*-NN from PATH.
+# NOTE: do not export any LLVM* variable here: the kernel Makefile defines
+# LLVM_PREFIX/LLVM_SUFFIX itself and an env var would corrupt CC (clang1).
 LLVM_SUFFIX=1
 if ! clang --version 2>/dev/null | grep -qE 'clang version (1[5-9]|2[0-9])'; then
 	for v in 19 18 17 16 15; do
@@ -20,7 +21,8 @@ if ! clang --version 2>/dev/null | grep -qE 'clang version (1[5-9]|2[0-9])'; the
 	done
 fi
 LLVM_MAKE="LLVM=$LLVM_SUFFIX"
-export LLVM_SUFFIX LLVM_MAKE
+
+KVER=$(make -C "$LINUX" O=build ARCH=arm64 $LLVM_MAKE -s kernelrelease)
 
 # GNU strip handles aarch64 static binaries more reliably than llvm-strip,
 # which can fail with "Link field value ... is not a symbol table".
