@@ -70,7 +70,7 @@ if [ ! -x "$TINYALSA_UTILS/tinymix" ] || [ ! -x "$TINYALSA_UTILS/tinyplay" ] || 
 			https://gh-proxy.com/https://github.com/tinyalsa/tinyalsa.git \
 			"$TINYALSA_SRC"
 	fi
-	make -C "$TINYALSA_SRC/src" \
+	make -C "$TINYALSA_SRC/src" libtinyalsa.a \
 		CC=aarch64-linux-gnu-gcc AR=aarch64-linux-gnu-ar
 	make -C "$TINYALSA_SRC/utils" \
 		CC=aarch64-linux-gnu-gcc AR=aarch64-linux-gnu-ar \
