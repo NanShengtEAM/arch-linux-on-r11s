@@ -23,7 +23,12 @@ fi
 
 cp -a "$SRC_INIT/init" "$IR/init"
 chmod 0755 "$IR/init"
-cp -a "$SRC_INIT/gpu-msm-probe" "$IR/bin/gpu-msm-probe"
+if [ -x "$SRC_INIT/gpu-msm-probe" ]; then
+	cp -a "$SRC_INIT/gpu-msm-probe" "$IR/bin/gpu-msm-probe"
+else
+	aarch64-linux-gnu-gcc -static -Os -Wall -Wextra \
+		-o "$IR/bin/gpu-msm-probe" "$SRC_INIT/gpu-msm-probe.c"
+fi
 chmod 0755 "$IR/bin/gpu-msm-probe"
 aarch64-linux-gnu-gcc -static -Os -Wall -Wextra \
 	-o "$IR/bin/nl80211-scan" "$SRC_INIT/nl80211-scan.c"
