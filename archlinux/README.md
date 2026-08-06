@@ -59,7 +59,7 @@ Debian 12 (bookworm) packages:
 ```sh
 apt-get install -y clang clang-19 lld-19 llvm-19 llvm-19-tools llvm-19-dev \
     llvm-19-linker-tools llvm-19-runtime make bc flex bison \
-    libelf-dev libssl-dev zstd cpio gzip device-tree-compiler gcc-aarch64-linux-gnu \
+    libelf-dev libssl-dev zstd cpio gzip device-tree-compiler gcc gcc-aarch64-linux-gnu \
     mkbootimg curl git
 ```
 

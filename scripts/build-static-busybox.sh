@@ -20,9 +20,15 @@ WORK="$SRC_ROOT/busybox-$BUSYBOX_VER"
 	exit 0
 }
 
+command -v gcc >/dev/null || {
+	echo "ERROR: host gcc not found (needed by busybox HOSTCC)" >&2
+	echo "Install: apt-get install -y gcc gcc-aarch64-linux-gnu" >&2
+	exit 1
+}
+
 command -v aarch64-linux-gnu-gcc >/dev/null || {
 	echo "ERROR: aarch64-linux-gnu-gcc not found" >&2
-	echo "Install: apt-get install -y gcc-aarch64-linux-gnu" >&2
+	echo "Install: apt-get install -y gcc gcc-aarch64-linux-gnu" >&2
 	exit 1
 }
 
