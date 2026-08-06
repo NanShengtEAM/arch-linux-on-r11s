@@ -16,7 +16,20 @@ OUTPUT=${OUTPUT:-$BUILD/boot-r11s-arch.img}
 	exit 1
 }
 
-make -C "$LINUX" O=build ARCH=arm64 LLVM=1 -j"$(nproc)" \
+# Kernel 7.0 requires clang >= 15; if the default clang is too old, pick a
+# versioned one so LLVM=-NN uses clang-NN/llvm-*-NN from PATH.
+LLVM_SUFFIX=1
+if ! clang --version 2>/dev/null | grep -qE 'clang version (1[5-9]|2[0-9])'; then
+	for v in 19 18 17 16 15; do
+		if command -v "clang-$v" >/dev/null 2>&1; then
+			LLVM_SUFFIX="-$v"
+			break
+		fi
+	done
+fi
+LLVM_MAKE="LLVM=$LLVM_SUFFIX"
+
+make -C "$LINUX" O=build ARCH=arm64 $LLVM_MAKE -j"$(nproc)" \
 	Image.gz qcom/sdm660-oppo-r11s.dtb
 
 rm -rf "$WORK"

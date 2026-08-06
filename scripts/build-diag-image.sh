@@ -8,6 +8,20 @@ SRC_INIT="$ROOT/initramfs"
 IR="$BUILD/initramfs-root"
 KVER=$(make -C "$LINUX" O=build ARCH=arm64 LLVM=1 -s kernelrelease)
 
+# Kernel 7.0 requires clang >= 15; if the default clang is too old, pick a
+# versioned one so LLVM=-NN uses clang-NN/llvm-*-NN from PATH.
+LLVM_SUFFIX=1
+if ! clang --version 2>/dev/null | grep -qE 'clang version (1[5-9]|2[0-9])'; then
+	for v in 19 18 17 16 15; do
+		if command -v "clang-$v" >/dev/null 2>&1; then
+			LLVM_SUFFIX="-$v"
+			break
+		fi
+	done
+fi
+LLVM_MAKE="LLVM=$LLVM_SUFFIX"
+export LLVM_SUFFIX LLVM_MAKE
+
 # GNU strip handles aarch64 static binaries more reliably than llvm-strip,
 # which can fail with "Link field value ... is not a symbol table".
 if command -v aarch64-linux-gnu-strip >/dev/null 2>&1; then
@@ -100,21 +114,25 @@ fi
 for tool in rmtfs tqftpserv diag-router; do
 	if [ ! -x "$IR/bin/$tool" ]; then
 		cat >&2 <<EOF
-ERROR: missing static diagnostic tool $IR/bin/$tool
+WARNING: static diagnostic tool $IR/bin/$tool is missing
 
-These three tools (rmtfs, tqftpserv, diag-router) are device bring-up
-binaries from the upstream r11t project and are not shipped in this
-repository.
+These tools (rmtfs, tqftpserv, diag-router) are device bring-up binaries
+from the upstream r11t project and are not shipped in this repository.
+init/ starts each one only if present (checks -x), so the diag image is
+still buildable and bootable without them.
 
   rmtfs:       run scripts/build-rmtfs.sh to cross-build it automatically
                (fetches libqrtr and builds a static sysfs-backed aarch64
-               binary; no libudev needed), then re-run this script
+               binary; no libudev needed)
   tqftpserv:   place the static binary at /usr/local/r11s/tqftpserv/tqftpserv.static
   diag-router: place the static binary at /usr/local/r11s/diag/diag-router
 
-Place the prebuilt binaries in the expected locations and re-run this script.
+Continuing without $tool. To make it mandatory, set R11S_REQUIRE_BRINGUP=1.
 EOF
-		exit 1
+		if [ "${R11S_REQUIRE_BRINGUP:-0}" = 1 ]; then
+			exit 1
+		fi
+		continue
 	fi
 	chmod 0755 "$IR/bin/$tool"
 done
@@ -218,33 +236,94 @@ for m in "${mods[@]}"; do
 	$STRIP --strip-debug "$IR/lib/modules/$(basename "$m")"
 done
 
-# GPU firmware (OPPO signed ZAP + A530 microcode used by A512).
+# Firmware sources: prefer a staged r11s_pmos-firmware.zip (downloaded from
+# the kernel repo qcom-sdm660-7.0.y branch on first use), otherwise the
+# device-info/ partition dumps.
+FIRMWARE_ZIP=${FIRMWARE_ZIP:-$ROOT/firmware/r11s_pmos-firmware.zip}
+FIRMWARE_URL=${FIRMWARE_URL:-https://gh-proxy.com/github.com/NanShengtEAM/linux-sdm660-oppor11_s/raw/refs/heads/qcom-sdm660-7.0.y/r11s_pmos-firmware.zip}
+FW_DIR=
+if [ ! -f "$FIRMWARE_ZIP" ]; then
+	if command -v wget >/dev/null 2>&1 || command -v curl >/dev/null 2>&1; then
+		echo "downloading $FIRMWARE_ZIP" >&2
+		mkdir -p "$(dirname "$FIRMWARE_ZIP")"
+		if command -v wget >/dev/null 2>&1; then
+			wget -q -O "$FIRMWARE_ZIP" "$FIRMWARE_URL" || true
+		else
+			curl -fsSL -o "$FIRMWARE_ZIP" "$FIRMWARE_URL" || true
+		fi
+	fi
+fi
+if [ -f "$FIRMWARE_ZIP" ]; then
+	command -v unzip >/dev/null 2>&1 || {
+		echo "ERROR: firmware zip present but 'unzip' is missing (apt-get install unzip)" >&2
+		exit 1
+	}
+	FW_SRC_ROOT="$BUILD/firmware-src"
+	if [ ! -d "$FW_SRC_ROOT/pmos-firmware/lib/firmware" ]; then
+		mkdir -p "$FW_SRC_ROOT"
+		unzip -q -o "$FIRMWARE_ZIP" -d "$FW_SRC_ROOT"
+	fi
+	FW_DIR="$FW_SRC_ROOT/pmos-firmware/lib/firmware"
+else
+	FW_DIR="$ROOT/device-info/firmware"
+fi
+
+# GPU firmware: OPPO-signed A512 ZAP + A530 microcode used by A512.
 mkdir -p "$IR/lib/firmware/qcom"
-cp -a "$ROOT"/device-info/firmware/gpu/a530_pm4.fw "$IR/lib/firmware/qcom/"
-cp -a "$ROOT"/device-info/firmware/gpu/a530_pfp.fw "$IR/lib/firmware/qcom/"
-cp -a "$ROOT"/device-info/firmware/gpu/a530_pm4.fw "$IR/lib/firmware/"
-cp -a "$ROOT"/device-info/firmware/gpu/a530_pfp.fw "$IR/lib/firmware/"
-cp -a "$ROOT"/device-info/firmware/gpu/a512_zap.* "$IR/lib/firmware/"
-ln -sfn a512_zap.mdt "$IR/lib/firmware/a512_zap.mbn"
+GPU_SRC=
+if [ -f "$FW_DIR/qcom/a530_pm4.fw" ]; then
+	GPU_SRC="$FW_DIR/qcom"
+elif [ -d "$ROOT/device-info/firmware/gpu" ]; then
+	GPU_SRC="$ROOT/device-info/firmware/gpu"
+fi
+if [ -n "$GPU_SRC" ]; then
+	cp -a "$GPU_SRC/a530_pm4.fw" "$IR/lib/firmware/qcom/"
+	cp -a "$GPU_SRC/a530_pfp.fw" "$IR/lib/firmware/qcom/"
+	cp -a "$GPU_SRC/a530_pm4.fw" "$IR/lib/firmware/"
+	cp -a "$GPU_SRC/a530_pfp.fw" "$IR/lib/firmware/"
+	cp -a "$GPU_SRC/a512_zap".* "$IR/lib/firmware/" 2>/dev/null || true
+	ln -sfn a512_zap.mdt "$IR/lib/firmware/a512_zap.mbn"
+else
+	echo "WARNING: GPU firmware (a530/a512_zap) not found; GPU will not initialize" >&2
+fi
 
 # Touch firmware (read-only archive in image; not auto-flashed).
-mkdir -p "$IR/lib/firmware/tp/16051"
-cp -a "$ROOT"/device-info/firmware/tp/* "$IR/lib/firmware/tp/16051/"
+if [ -d "$ROOT/device-info/firmware/tp" ]; then
+	mkdir -p "$IR/lib/firmware/tp/16051"
+	cp -a "$ROOT"/device-info/firmware/tp/* "$IR/lib/firmware/tp/16051/"
+fi
+if [ -f "$FW_DIR/rmi4/17011_FW_S3508_SYNAPTICS.img" ]; then
+	mkdir -p "$IR/lib/firmware/rmi4"
+	cp -a "$FW_DIR/rmi4/17011_FW_S3508_SYNAPTICS.img" "$IR/lib/firmware/rmi4/"
+fi
 
-# ath10k host firmware.
+# ath10k host firmware (system package preferred, pmos zip as fallback).
 mkdir -p "$IR/lib/firmware/ath10k/WCN3990/hw1.0"
-cp -a /usr/lib/firmware/ath10k/WCN3990/hw1.0/firmware-5.bin \
-	"$IR/lib/firmware/ath10k/WCN3990/hw1.0/"
-cp -a /usr/lib/firmware/ath10k/WCN3990/hw1.0/board-2.bin \
-	"$IR/lib/firmware/ath10k/WCN3990/hw1.0/"
+for f in /usr/lib/firmware/ath10k/WCN3990/hw1.0/firmware-5.bin \
+	/usr/lib/firmware/ath10k/WCN3990/hw1.0/board-2.bin; do
+	[ -f "$f" ] && cp -a "$f" "$IR/lib/firmware/ath10k/WCN3990/hw1.0/"
+done
+if [ -f "$FW_DIR/ath10k/WCN3990/hw1.0/board.bin" ]; then
+	cp -a "$FW_DIR/ath10k/WCN3990/hw1.0/board.bin" \
+		"$IR/lib/firmware/ath10k/WCN3990/hw1.0/"
+fi
 # R11S BDF reference (for later board-2 packaging; not consumed raw by ath10k).
-cp -a "$ROOT"/device-info/firmware/wifi/bdwlan_16051.bin \
-	"$IR/lib/firmware/ath10k/WCN3990/hw1.0/" || true
+if [ -f "$ROOT/device-info/firmware/wifi/bdwlan_16051.bin" ]; then
+	cp -a "$ROOT/device-info/firmware/wifi/bdwlan_16051.bin" \
+		"$IR/lib/firmware/ath10k/WCN3990/hw1.0/"
+fi
 
-# WCN3990 Bluetooth rampatch and NVM.
+# WCN3990 Bluetooth rampatch and NVM (system package preferred, pmos fallback).
 mkdir -p "$IR/lib/firmware/qca"
-cp -a /usr/lib/firmware/qca/crbtfw21.tlv "$IR/lib/firmware/qca/"
-cp -a /usr/lib/firmware/qca/crnv21.bin "$IR/lib/firmware/qca/"
+for f in /usr/lib/firmware/qca/crbtfw21.tlv /usr/lib/firmware/qca/crnv21.bin; do
+	[ -f "$f" ] && cp -a "$f" "$IR/lib/firmware/qca/"
+done
+if [ -f "$FW_DIR/qca/crbtfw21.tlv" ]; then
+	cp -a "$FW_DIR/qca/crbtfw21.tlv" "$IR/lib/firmware/qca/"
+fi
+if [ -f "$FW_DIR/qca/crnv21.bin" ]; then
+	cp -a "$FW_DIR/qca/crnv21.bin" "$IR/lib/firmware/qca/"
+fi
 
 # Regulatory DB if present on host or staged under /usr/local/r11s.
 for f in /usr/local/r11s/regulatory.db /usr/local/r11s/regulatory.db.p7s \
@@ -254,7 +333,7 @@ for f in /usr/local/r11s/regulatory.db /usr/local/r11s/regulatory.db.p7s \
 done
 
 # Rebuild DTB (touch DTS changes) and image.
-make -C "$LINUX" O=build ARCH=arm64 LLVM=1 -j"$(nproc)" \
+make -C "$LINUX" O=build ARCH=arm64 $LLVM_MAKE -j"$(nproc)" \
 	qcom/sdm660-oppo-r11s.dtb Image.gz
 
 # Pack initramfs.
