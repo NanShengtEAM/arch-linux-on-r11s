@@ -132,6 +132,18 @@ If you do not have the prebuilt static busybox yet, build it first with
 `aarch64-linux-gnu-gcc` and `CONFIG_STATIC=y` into
 `linux/build/initramfs-root/bin/busybox`):
 
+The diagnostic image also bundles three device bring-up binaries that are not
+shipped in this repository (they come from the upstream r11t project). You must
+provide them before `build-diag-image.sh` succeeds:
+
+- `rmtfs`: built from
+  `https://github.com/CPH1707-Mainline/rmtfs-sdm660-oppor11-t` (needs libqrtr
+  headers and `qmic`; cross-built on the bring-up host). Copy the static
+  binary to `linux/build/initramfs-root/bin/rmtfs`.
+- `tqftpserv`: place the static binary at
+  `/tmp/opencode/tqftpserv/tqftpserv.static`.
+- `diag-router`: place the static binary at `/tmp/opencode/diag/diag-router`.
+
 ### 4. Root and rescue ext4 filesystem images
 
 Create exact-size images first (userdata 56933465600 B, system 3481272320 B):

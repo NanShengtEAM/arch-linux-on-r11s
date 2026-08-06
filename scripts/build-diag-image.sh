@@ -99,7 +99,21 @@ if [ -x /tmp/opencode/diag/diag-router ]; then
 fi
 for tool in rmtfs tqftpserv diag-router; do
 	if [ ! -x "$IR/bin/$tool" ]; then
-		echo "ERROR: missing static diagnostic tool $IR/bin/$tool" >&2
+		cat >&2 <<EOF
+ERROR: missing static diagnostic tool $IR/bin/$tool
+
+These three tools (rmtfs, tqftpserv, diag-router) are device bring-up
+binaries from the upstream r11t project and are not shipped in this
+repository.
+
+  rmtfs:       build from https://github.com/CPH1707-Mainline/rmtfs-sdm660-oppor11-t
+               (needs libqrtr headers and qmic; typically cross-built on the
+               bring-up host), then copy the static binary to \$IR/bin/rmtfs
+  tqftpserv:   place the static binary at /tmp/opencode/tqftpserv/tqftpserv.static
+  diag-router: place the static binary at /tmp/opencode/diag/diag-router
+
+Place the prebuilt binaries in the expected locations and re-run this script.
+EOF
 		exit 1
 	fi
 	chmod 0755 "$IR/bin/$tool"

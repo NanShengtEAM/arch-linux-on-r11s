@@ -9,7 +9,7 @@ OPPO R11S（`oppo,r11s`）主线 Linux 移植版的 Arch Linux ARM 部署、恢�
 相关源码仓库：
 
 - 内核：<https://github.com/NanShengtEAM/linux-sdm660-oppor11_s>
-- RMTFS：<https://github.com/HELPMEEADICE/rmtfs-sdm660-oppor11_s>
+- RMTFS（上游 r11t）：<https://github.com/CPH1707-Mainline/rmtfs-sdm660-oppor11-t>
 - 通用工具：<https://github.com/HELPMEEADICE/oppo-r11-mainline-tools-sdm660-oppor11_s>
 
 构建脚本期望内核检出目录位于 `./linux`。该公开源码仓库有意排除设备固件、分区备份、生成的镜像、密码、SSH 密钥、MAC 地址以及提取的设备数据。固件与账户凭据在构建或运行时由设备保留的只读分区在本地提供。
