@@ -141,8 +141,8 @@ provide them before `build-diag-image.sh` succeeds:
   headers and `qmic`; cross-built on the bring-up host). Copy the static
   binary to `linux/build/initramfs-root/bin/rmtfs`.
 - `tqftpserv`: place the static binary at
-  `/tmp/opencode/tqftpserv/tqftpserv.static`.
-- `diag-router`: place the static binary at `/tmp/opencode/diag/diag-router`.
+  `/usr/local/r11s/tqftpserv/tqftpserv.static`.
+- `diag-router`: place the static binary at `/usr/local/r11s/diag/diag-router`.
 
 ### 4. Root and rescue ext4 filesystem images
 

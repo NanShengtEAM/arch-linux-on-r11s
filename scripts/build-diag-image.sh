@@ -59,7 +59,7 @@ $STRIP "$IR/bin/audio-tone"
 aarch64-linux-gnu-gcc -static -Os -Wall -Wextra -Werror \
 	-o "$IR/bin/reboot-mode" "$SRC_INIT/reboot-mode.c"
 $STRIP "$IR/bin/reboot-mode"
-TINYALSA_UTILS=${TINYALSA_UTILS:-/tmp/opencode/tinyalsa-r11s/utils}
+TINYALSA_UTILS=${TINYALSA_UTILS:-/usr/local/r11s/tinyalsa-r11s/utils}
 if [ ! -x "$TINYALSA_UTILS/tinymix" ] || [ ! -x "$TINYALSA_UTILS/tinyplay" ] || \
 	[ ! -x "$TINYALSA_UTILS/tinycap" ]; then
 	echo "building static tinyalsa utils from source"
@@ -91,11 +91,11 @@ for tool in tinymix tinyplay tinycap; do
 		exit 1
 	fi
 done
-if [ -x /tmp/opencode/tqftpserv/tqftpserv.static ]; then
-	cp -a /tmp/opencode/tqftpserv/tqftpserv.static "$IR/bin/tqftpserv"
+if [ -x /usr/local/r11s/tqftpserv/tqftpserv.static ]; then
+	cp -a /usr/local/r11s/tqftpserv/tqftpserv.static "$IR/bin/tqftpserv"
 fi
-if [ -x /tmp/opencode/diag/diag-router ]; then
-	cp -a /tmp/opencode/diag/diag-router "$IR/bin/diag-router"
+if [ -x /usr/local/r11s/diag/diag-router ]; then
+	cp -a /usr/local/r11s/diag/diag-router "$IR/bin/diag-router"
 fi
 for tool in rmtfs tqftpserv diag-router; do
 	if [ ! -x "$IR/bin/$tool" ]; then
@@ -109,8 +109,8 @@ repository.
   rmtfs:       build from https://github.com/CPH1707-Mainline/rmtfs-sdm660-oppor11-t
                (needs libqrtr headers and qmic; typically cross-built on the
                bring-up host), then copy the static binary to \$IR/bin/rmtfs
-  tqftpserv:   place the static binary at /tmp/opencode/tqftpserv/tqftpserv.static
-  diag-router: place the static binary at /tmp/opencode/diag/diag-router
+  tqftpserv:   place the static binary at /usr/local/r11s/tqftpserv/tqftpserv.static
+  diag-router: place the static binary at /usr/local/r11s/diag/diag-router
 
 Place the prebuilt binaries in the expected locations and re-run this script.
 EOF
@@ -246,8 +246,8 @@ mkdir -p "$IR/lib/firmware/qca"
 cp -a /usr/lib/firmware/qca/crbtfw21.tlv "$IR/lib/firmware/qca/"
 cp -a /usr/lib/firmware/qca/crnv21.bin "$IR/lib/firmware/qca/"
 
-# Regulatory DB if present on host or staged under /tmp/opencode.
-for f in /tmp/opencode/regulatory.db /tmp/opencode/regulatory.db.p7s \
+# Regulatory DB if present on host or staged under /usr/local/r11s.
+for f in /usr/local/r11s/regulatory.db /usr/local/r11s/regulatory.db.p7s \
 	/usr/lib/firmware/regulatory.db /usr/lib/firmware/regulatory.db.p7s \
 	/lib/firmware/regulatory.db /lib/firmware/regulatory.db.p7s; do
 	[ -f "$f" ] && cp -a "$f" "$IR/lib/firmware/" || true

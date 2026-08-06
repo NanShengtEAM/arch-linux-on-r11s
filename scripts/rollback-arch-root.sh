@@ -2,7 +2,7 @@
 set -euo pipefail
 
 EXPECTED_SIZE=56933465600
-MOUNT_ROOT=${R11S_ROLLBACK_MOUNT:-/tmp/opencode/r11s-rollback}
+MOUNT_ROOT=${R11S_ROLLBACK_MOUNT:-/usr/local/r11s/r11s-rollback}
 RESCUE_ROOT=${R11S_RESCUE_ROOT:-/srv/r11s-rescue}
 DEVICE=
 RESCUE_DEVICE=

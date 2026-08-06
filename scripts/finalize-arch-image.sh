@@ -7,7 +7,7 @@ OUTPUT=
 CONFIRM=0
 SOURCE_SIZE=56933465600
 OUTPUT_SIZE=8589934592
-MOUNT_ROOT=${R11S_FINALIZE_MOUNT:-/tmp/opencode/r11s-finalize}
+MOUNT_ROOT=${R11S_FINALIZE_MOUNT:-/usr/local/r11s/r11s-finalize}
 
 while (($#)); do
 	case "$1" in

@@ -7,7 +7,7 @@ BUILD="$LINUX/build"
 OVERLAY="$ROOT/archlinux/rootfs-overlay"
 PACKAGES_FILE="$ROOT/archlinux/packages.txt"
 EXPECTED_SIZE=56933465600
-MOUNT_ROOT=${R11S_MOUNT_ROOT:-/tmp/opencode/r11s-arch-root}
+MOUNT_ROOT=${R11S_MOUNT_ROOT:-/usr/local/r11s/r11s-arch-root}
 DEVICE=
 CONFIRM=0
 

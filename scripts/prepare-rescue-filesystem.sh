@@ -2,7 +2,7 @@
 set -euo pipefail
 
 EXPECTED_SIZE=3481272320
-MOUNT_ROOT=${R11S_RESCUE_MOUNT:-/tmp/opencode/r11s-rescue}
+MOUNT_ROOT=${R11S_RESCUE_MOUNT:-/usr/local/r11s/r11s-rescue}
 DEVICE=
 CONFIRM=0
 ROOTFS_IMAGE=
