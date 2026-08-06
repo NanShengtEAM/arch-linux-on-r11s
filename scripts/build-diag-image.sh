@@ -107,8 +107,8 @@ binaries from the upstream r11t project and are not shipped in this
 repository.
 
   rmtfs:       run scripts/build-rmtfs.sh to cross-build it automatically
-               (fetches libqrtr + eudev and produces a static aarch64 binary),
-               then re-run this script
+               (fetches libqrtr and builds a static sysfs-backed aarch64
+               binary; no libudev needed), then re-run this script
   tqftpserv:   place the static binary at /usr/local/r11s/tqftpserv/tqftpserv.static
   diag-router: place the static binary at /usr/local/r11s/diag/diag-router
 

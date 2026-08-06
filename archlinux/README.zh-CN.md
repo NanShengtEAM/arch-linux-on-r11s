@@ -96,7 +96,7 @@ scripts/build-diag-image.sh
 
 诊断镜像还会打包三个设备 bring-up 二进制，它们不随本仓库分发（来自上游 r11t 项目）。必须在 `build-diag-image.sh` 成功前自行准备：
 
-- `rmtfs`：运行 `scripts/build-rmtfs.sh` 即可自动交叉编译。脚本会拉取 libqrtr 用户态库与 eudev（用于静态 `libudev.a`），用 `aarch64-linux-gnu-gcc` 交叉编译，并把静态二进制安装到 `linux/build/initramfs-root/bin/rmtfs`。
+- `rmtfs`：运行 `scripts/build-rmtfs.sh` 即可自动交叉编译。脚本会拉取 libqrtr 用户态库，用 `aarch64-linux-gnu-gcc` 交叉编译基于 sysfs 的静态版本（无需 libudev），并把二进制安装到 `linux/build/initramfs-root/bin/rmtfs`。
 - `tqftpserv`：把静态二进制放到 `/usr/local/r11s/tqftpserv/tqftpserv.static`。
 - `diag-router`：把静态二进制放到 `/usr/local/r11s/diag/diag-router`。
 
